@@ -1,6 +1,9 @@
 # 新仓库
 为避免别人fork原项目后，随便pull影响原作者，特重开此仓库。
-如果你是需要下载固件，那么没有必要fork，因为fork不会同步自动更新的固件，因此，建议你记住或收藏该项目短网址 https://jcnf.xyz/gj
+如果你是需要下载固件，那么没有必要fork，因为fork不会同步自动更新的固件。
+因此，如果你喜欢我编译的固件，并且想试试关注，你可以
+* 点击右上角star，这样你在github里面方便找到此项目
+* 用浏览器收藏该项目短网址 https://jcnf.xyz/gj
 
 此项目基于flippy的56+o打包N1和s905X3 （hk1等）的openwrt，为jcnf个人正在使用的固件版本。openwrt来自我自己的另一个项目[N1Openwrt](https://github.com/Netflixxp/op-)
 
