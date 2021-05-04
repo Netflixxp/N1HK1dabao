@@ -46,7 +46,7 @@ fi
 echo "Use $OPWRT_ROOTFS_GZ as openwrt rootfs!"
 
 # 目标镜像文件
-TGT_IMG="${WORK_DIR}/N1-jcnf-mini-58+o.img"
+TGT_IMG="${WORK_DIR}/N1-jcnf-mini-57+o.img"
 
 # 判断内核版本是否 >= 5.10
 K_VER=$(echo "$KERNEL_VERSION" | cut -d '.' -f1)
@@ -460,7 +460,7 @@ cat > ./etc/config/fstab <<EOF
 config global
         option anon_swap '0'
         option auto_swap '0'
-        option anon_mount '0'
+        option anon_mount '1'
         option auto_mount '1'
         option delay_root '5'
         option check_fs '0'
