@@ -46,7 +46,7 @@ fi
 echo "Use $OPWRT_ROOTFS_GZ as openwrt rootfs!"
 
 # 目标镜像文件
-TGT_IMG="${WORK_DIR}/N1-jcnf-mini-57+o.img"
+TGT_IMG="${WORK_DIR}/N1-jcnf-mini-58+o.img"
 
 # 判断内核版本是否 >= 5.10
 K_VER=$(echo "$KERNEL_VERSION" | cut -d '.' -f1)
