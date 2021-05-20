@@ -12,7 +12,8 @@ on:
         description: 'The minimum runs to keep for each workflow.'
         required: true
         default: 6
-      
+   schedule:
+     - cron: 0 23 * * *
 env:
   UPLOAD_COWTRANSFER: false
   RELEASE: true
