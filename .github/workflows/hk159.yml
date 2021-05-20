@@ -28,6 +28,8 @@ jobs:
         include:
           - flippy_name: 59
             release_name: HK1-jcnf-mini-59+o.img
+          - flippy_name: 59
+            release_name: N1-jcnf-mini-59+o.img
 
     env:
       FLIPPY_NAME: ${{ matrix.flippy_name }}   
@@ -73,6 +75,8 @@ jobs:
         cd /opt/kernel
         sudo chmod +x mk_s905x3_multi.sh
         sudo ./mk_s905x3_multi.sh
+        sudo chmod +x mk_s905d_n1.sh
+        sudo ./mk_s905d_n1.sh
         
     - name: copy update files
       run: |
