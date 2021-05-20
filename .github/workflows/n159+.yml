@@ -13,7 +13,7 @@ on:
         required: true
         default: 6
    schedule:
-     - cron: 0 23 * * *
+    - cron: 0 23 * * * 
 env:
   UPLOAD_COWTRANSFER: false
   RELEASE: true
