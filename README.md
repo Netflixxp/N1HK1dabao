@@ -41,6 +41,7 @@
 * passwall
 * openclash
 * hello word
+* Bypass
 * Argon主題 
 * docker-ce
 * AdGuard Home
