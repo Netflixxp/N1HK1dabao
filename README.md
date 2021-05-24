@@ -2,6 +2,7 @@
 2021年5月24日，同步更新F大佬的快照功能
 ![增加快照功能](https://github.com/Netflixxp/N1HK1dabao/blob/main/img/kuazhao.jpg)
 
+使用方法：固件新刷入或采用新版的 update-xxx-openwrt.sh 脚本升级之后就具备了快照功能，工具包名称：由于取名困难，故采用了 flippy 为命令名称（/usr/sbin/flippy)，在ssh或ttyd下输入即可，全程中文菜单，全交互式操作。
 # 特别提醒
 不要盲目追新，仓库自动打包的固件或插件，均为最新的版本，最新版本意味着有BUG；如果之前固件使用稳定，无需追新。
 总结一句话：**追新有风险、更新须谨慎**
