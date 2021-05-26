@@ -46,7 +46,7 @@ fi
 echo "Use $OPWRT_ROOTFS_GZ as openwrt rootfs!"
 
 # 目标镜像文件
-TGT_IMG="${WORK_DIR}/N1-jcnf-mini-59+.img"
+TGT_IMG="${WORK_DIR}/N1-jcnf-mini-59+o.img"
 
 # 判断内核版本是否 >= 5.10
 K_VER=$(echo "$KERNEL_VERSION" | cut -d '.' -f1)
@@ -445,6 +445,16 @@ config share
 EOF
 fi
 
+# for openclash
+if [ -d ./etc/openclash/core ];then
+    (
+        mkdir -p ./usr/share/openclash/core && \
+	cd ./etc/openclash && \
+	mv core ../../usr/share/openclash/ && \
+	ln -s ../../usr/share/openclash/core .
+    )
+fi
+
 chmod 755 ./etc/init.d/*
 
 sed -e "s/option wan_mode 'false'/option wan_mode 'true'/" -i ./etc/config/dockerman 2>/dev/null
@@ -521,8 +531,8 @@ fi
 [ -f ./etc/modules.d/usb-net-asix-ax88179 ] || echo "ax88179_178a" > ./etc/modules.d/usb-net-asix-ax88179
 # +版内核，优先启用v2驱动, +o内核则启用v1驱动
 if echo $KERNEL_VERSION | grep -E '*\+$' ;then
-	echo "r8152_v2" > ./etc/modules.d/usb-net-rtl8152
-	#echo "r8152" > ./etc/modules.d/usb-net-rtl8152
+	#echo "r8152_v2" > ./etc/modules.d/usb-net-rtl8152
+	echo "r8152" > ./etc/modules.d/usb-net-rtl8152
 else
 	echo "r8152" > ./etc/modules.d/usb-net-rtl8152
 fi
