@@ -358,10 +358,10 @@ fi
 [ -f $FORCE_REBOOT ] && cp $FORCE_REBOOT usr/sbin/
 [ -f $COREMARK ] && [ -f "etc/coremark.sh" ] && cp -f $COREMARK "etc/coremark.sh" && chmod 755 "etc/coremark.sh"
 if [ -x usr/bin/perl ];then
-	[ -f $CPUSTAT_SCRIPT ] && cp $CPUSTAT_SCRIPT usr/bin/
+	[ -f $CPUSTAT_SCRIPT ] && cp $CPUSTAT_SCRIPT usr/bin/cpustat && chmod 755 usr/bin/cpustat
 	[ -f $GETCPU_SCRIPT ] && cp $GETCPU_SCRIPT bin/
 else
-	[ -f $CPUSTAT_SCRIPT_PY ] && cp $CPUSTAT_SCRIPT_PY usr/bin/cpustat
+	[ -f $CPUSTAT_SCRIPT_PY ] && cp $CPUSTAT_SCRIPT_PY usr/bin/cpustat && chmod 755 usr/bin/cpustat
 fi
 [ -f $TTYD ] && cp $TTYD etc/init.d/
 [ -f $FLIPPY ] && cp $FLIPPY usr/sbin/
@@ -532,7 +532,7 @@ fi
 # +版内核，优先启用v2驱动, +o内核则启用v1驱动
 if echo $KERNEL_VERSION | grep -E '*\+$' ;then
 	#echo "r8152_v2" > ./etc/modules.d/usb-net-rtl8152
-	echo "r8152" > ./etc/modules.d/usb-net-rtl8152
+	echo "r8152_v2" > ./etc/modules.d/usb-net-rtl8152
 else
 	echo "r8152" > ./etc/modules.d/usb-net-rtl8152
 fi
