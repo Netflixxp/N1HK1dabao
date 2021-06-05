@@ -1,0 +1,168 @@
+name: ipk
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      ssh:
+        description: 'SSH connection to Actions'
+        required: false
+        default: 'false'
+  schedule:
+    - cron: 0 16 * * *
+
+env:
+  REPO_URL: https://github.com/coolsnowwolf/lede
+  REPO_BRANCH: master
+  FEEDS_CONF: feeds.conf.default
+  CONFIG_FILE: .config
+  DIY_P1_SH: diy-part1.sh
+  DIY_P2_SH: ipk.sh
+  UPLOAD_BIN_DIR: false
+  UPLOAD_FIRMWARE: false
+  UPLOAD_COWTRANSFER: false
+  UPLOAD_WETRANSFER: false
+  UPLOAD_RELEASE: true
+  TZ: Asia/Shanghai
+  FILE_NAME: ipk
+  PRODUCT_NAME: ipk
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@main
+
+    - name: Initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq install $(curl -fsSL git.io/depends-ubuntu-1804)
+        sudo -E apt-get -qq install rename
+        sudo -E apt-get -qq install time
+        sudo -E apt-get -qq autoremove --purge
+        sudo -E apt-get -qq clean
+        sudo timedatectl set-timezone "$TZ"
+        sudo mkdir -p /workdir
+        sudo chown $USER:$GROUPS /workdir
+    - name: 编译前硬盘容量
+      if: (!cancelled())
+      run: df -hT
+
+    - name: Clone source code
+      working-directory: /workdir
+      run: |
+        df -hT $PWD
+        git clone $REPO_URL -b $REPO_BRANCH openwrt
+        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+        cd openwrt
+        useVersionInfo=$(git show -s --date=short --format="Author: %an<br/>date: %cd<br/>commit: %s<br/>commit hash: %H")
+        echo "useVersionInfo=$useVersionInfo" >> $GITHUB_ENV
+        echo "DATE=$(date "+%Y-%m-%d %H:%M:%S")" >> $GITHUB_ENV
+    - name: Load custom feeds
+      run: |
+        [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
+        #chmod +x $DIY_P1_SH
+        cd openwrt
+        #$GITHUB_WORKSPACE/$DIY_P1_SH
+    - name: Update feeds
+      run: cd openwrt && ./scripts/feeds update -a
+
+    - name: Install feeds
+      run: cd openwrt && ./scripts/feeds install -a
+    
+    - name: Load custom configuration
+      run: |
+        [ -e files ] && mv files openwrt/files
+        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+        chmod +x $DIY_P2_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/$DIY_P2_SH
+
+    - name: SSH connection to Actions
+      uses: P3TERX/ssh2actions@v1.0.0
+      if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
+      env:
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+
+    - name: Download package
+      id: package
+      run: |
+        cd openwrt
+        make defconfig
+        make download -j8
+        find dl -size -1024c -exec ls -l {} \;
+        find dl -size -1024c -exec rm -f {} \;
+
+    - name: Compile the firmware
+      id: compile
+      run: |
+        cd openwrt
+        echo -e "$(nproc) thread compile"
+        make -j$(nproc) || make -j1 || make -j1 V=s
+        echo "::set-output name=status::success"
+        grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
+        [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
+        echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+  #  - name: Check space usage
+  #    if: (!cancelled())
+  #    run: df -hT
+
+    - name: Organize files
+      id: organize
+      if: steps.compile.outputs.status == 'success' && !cancelled()
+      run: |
+        cd $GITHUB_WORKSPACE
+        cd openwrt/bin/targets/*/*
+        ls
+        rm -rf packages sha256sums config.buildinfo feeds.buildinfo openwrt-armvirt-64-default.manifest openwrt-armvirt-64-Image openwrt-armvirt-64-rootfs-ext4.img version.buildinfo
+        ls -lah
+        cd -
+        cp -r openwrt/bin/packages/*/base/luci-app-ssr-plus* openwrt/bin/packages/*/base/luci-i18n-ssr-plus* openwrt/bin/packages/*/base/luci-app-passwall* openwrt/bin/packages/*/base/luci-app-vssr* openwrt/bin/packages/*/base/luci-app-bypass* openwrt/bin/packages/*/base/luci-app-openclash* openwrt/bin/packages/*/base/xray-core* openwrt/bin/targets/*/*
+        cd openwrt/bin/targets/*/*
+        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+        echo "::set-output name=status::success"
+
+    - name: 编译后硬盘容量
+      if: (!cancelled())
+      run: df -hT
+      
+    - name: Upload bin directory
+      uses: actions/upload-artifact@main
+      if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
+      with:
+        name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        path: openwrt/bin/targets/*/*/bin.tar.gz
+
+    - name: Upload firmware directory
+      uses: actions/upload-artifact@main
+      if: env.UPLOAD_FIRMWARE == 'true' && steps.organize.outputs.status == 'success' && !cancelled()
+      with:
+        name: OpenWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        path: ${{ env.FIRMWARE }}
+
+    - name: Create release
+      id: release
+      uses: ncipollo/release-action@v1
+      with:
+        name: ${{ env.DATE }} 科学上网常用ipk
+        allowUpdates: true
+        tag: ${{ env.FILE_NAME }}
+        commit: main
+        token: ${{ secrets.RELEASES_TOKEN }}
+        body: |
+          ## 以下为常用科学上网插件
+		  如果你不想重刷固件，可以直接更新需要更新的IPL
+		     1. 软路由后台-系统-软件包-过滤器-查找你要替换的IPK（如passwall，你就搜passwall就行）-移除
+			 2. 下载下面对应的IPK文件， 软路由后台-系统-文件传输-选择本地文件-选择ipk上传-上传文件列表-安装
+		  ## PS:只是单独上传IPK可能会因为依赖问题无法正确使用，还是建议刷新固件。
+        artifacts: ${{ env.FIRMWARE }}/*
+
+    - name: Telegram notification
+      if: steps.organize.outputs.status == 'success' && !cancelled()
+      run: curl -k --data chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" --data "text=${{ env.FILE_NAME }}编译完成" "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage"
