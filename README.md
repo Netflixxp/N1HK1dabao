@@ -1,6 +1,6 @@
 # 重要更新
 2021年5月24日，同步更新F大佬的快照功能
-![增加快照功能](https://github.com/Netflixxp/N1HK1dabao/blob/main/img/kuazhao.jpg)
+![增加快照功能](https://cdn.jsdelivr.net/gh/Netflixxp/N1HK1dabao/blob/main/img/kuazhao.jpg)
 
 使用方法：固件新刷入或采用新版的 update-xxx-openwrt.sh 脚本升级之后就具备了快照功能，工具包名称：由于取名困难，故采用了 flippy 为命令名称（/usr/sbin/flippy)，在ssh或ttyd下输入即可，全程中文菜单，全交互式操作。
 # 特别提醒
@@ -24,7 +24,7 @@
 
 # N1和HK1全新安装
 * 下载对应版本固件
-![固件链接地址](https://cdn.jsdelivr.net/Netflixxp/N1HK1dabao/blob/main/img/sj.png)
+![固件链接地址](https://cdn.jsdelivr.net/gh/Netflixxp/N1HK1dabao/blob/main/img/sj.png)
 * 将固件写入U盘或TF卡 推荐写盘软件 [rufu](https://rufus.ie/zh/)或者[balenaEtcher](balena.io/etcher/)任选其一
 * 插入U盘启动盒子，输入192.168.1.99进入后台
 * 在系统——TTYD终端——输入用户名root；密码password
@@ -34,14 +34,14 @@
 # N1和HK1在线升级方法
 * cd /mnt/mmcblk2p4
 * wget 升级脚本下载.sh后缀文件 [点这里跳转](https://github.com/Netflixxp/N1HK1dabao/releases)
-![固件链接地址](https://cdn.jsdelivr.net/Netflixxp/N1HK1dabao/blob/main/img/zx.png)
+![固件链接地址](https://cdn.jsdelivr.net/gh/Netflixxp/N1HK1dabao/blob/main/img/zx.png)
 * wget .gz后缀名的固件链接,鼠标右击后缀.gz文件获取链接地址 [点这里跳转](https://github.com/Netflixxp/N1HK1dabao/releases)
 * gzip -d 上一步下载的固件全名
 * chmod +x *.sh
 * ./升级脚本名字 img固件名
 
 # 插件包括
-![插件列表](https://cdn.jsdelivr.net/Netflixxp/N1HK1dabao/blob/main/img/lb.png)
+![插件列表](https://cdn.jsdelivr.net/gh/Netflixxp/N1HK1dabao/blob/main/img/lb.png)
 * SSR-Plus
 * passwall
 * openclash
