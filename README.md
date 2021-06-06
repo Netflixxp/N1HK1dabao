@@ -1,4 +1,10 @@
 # 重要更新
+2021年6月6日，加入科学上网常用ipk输出Releases
+每日定时更新最新科学上网插件IPK
+使用方式：先去Releases下载需要更新的ipk [点我跳转](https://github.com/Netflixxp/N1HK1dabao/releases/tag/ipk)
+* 软路由后台-系统-软件包-过滤器-查找你要替换的IPK（如passwall，你就搜passwall就行）-移除
+* 下载下面对应的IPK文件， 软路由后台-系统-文件传输-选择本地文件-选择ipk上传-上传文件列表-安装
+
 2021年5月24日，同步更新F大佬的快照功能
 ![增加快照功能](https://cdn.jsdelivr.net/gh/Netflixxp/N1HK1dabao/img/kuazhao.jpg)
 
