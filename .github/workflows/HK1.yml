@@ -1,4 +1,4 @@
-name: Build HK1 img60+0 and 59+
+name: Build HK1 img60+o and 60+
 
 on:
   repository_dispatch:
@@ -27,9 +27,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - flippy_name: 59+o
+          - flippy_name: 60+o
             release_name: HK1-jcnf-mini-60+o.img
-          - flippy_name: 59+
+          - flippy_name: 60+
             release_name: HK1-jcnf-mini-60+.img
 
     env:
