@@ -26,10 +26,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - flippy_name: 60+o
-            release_name: N1-jcnf-mini-60+o.img
-          - flippy_name: 60+
-            release_name: N1-jcnf-mini-60+.img
+          - flippy_name: 61+o
+            release_name: N1-jcnf-mini-61+o.img
+          - flippy_name: 61+
+            release_name: N1-jcnf-mini-61+.img
 
     env:
       FLIPPY_NAME: ${{ matrix.flippy_name }}   
