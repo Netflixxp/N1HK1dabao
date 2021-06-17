@@ -1,4 +1,4 @@
-name: Build N1 60+o and 60+
+name: Build N1 61+o and 61+
 on:
   repository_dispatch:
   workflow_dispatch:
