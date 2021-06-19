@@ -131,6 +131,9 @@ DOCKERD_PATCH="${PWD}/files/dockerd.patch"
 FIRMWARE_TXZ="${PWD}/files/firmware_armbian.tar.xz"
 BOOTFILES_HOME="${PWD}/files/bootfiles/amlogic"
 GET_RANDOM_MAC="${PWD}/files/get_random_mac.sh"
+
+# 20210618 add
+DOCKER_README="${PWD}/files/DockerReadme.pdf"
 ###########################################################################
 
 # 检查环境
@@ -402,7 +405,7 @@ if [ -x usr/bin/perl ];then
 else
 	[ -f $CPUSTAT_SCRIPT_PY ] && cp $CPUSTAT_SCRIPT_PY usr/bin/cpustat && chmod 755 usr/bin/cpustat
 fi
-[ -f $TTYD ] && cp $TTYD etc/init.d/
+#[ -f $TTYD ] && cp $TTYD etc/init.d/
 [ -f $FLIPPY ] && cp $FLIPPY usr/sbin/
 if [ -f $BANNER ];then
     cp -f $BANNER etc/banner
@@ -538,7 +541,8 @@ cat ./etc/config/fstab
 
 [ -f ./etc/docker-init ] && rm -f ./etc/docker-init
 [ -f ./sbin/firstboot ] && rm -f ./sbin/firstboot
-[ -f ./sbin/jffs2reset ] && rm -f ./sbin/jffs2reset
+[ -f ./sbin/jffs2reset ] && rm -f ./sbin/jffs2reset ./sbin/jffs2mark
+[ -f ./www/DockerReadme.pdf ] && [ -f ${DOCKER_README} ] && cp -fv ${DOCKER_README} ./www/DockerReadme.pdf
 
 mkdir -p ./etc/modprobe.d
 cat > ./etc/modprobe.d/99-local.conf <<EOF
@@ -611,7 +615,11 @@ ln -sf kmod lsmod
 ln -sf kmod modinfo
 ln -sf kmod modprobe
 ln -sf kmod rmmod
-ln -sf /usr/bin/ntfs-3g mount.ntfs
+if [ -f mount.ntfs3 ];then
+    ln -sf mount.ntfs3 mount.ntfs
+elif [ -f ../usr/bin/ntfs-3g ];then
+    ln -sf /usr/bin/ntfs-3g mount.ntfs
+fi
 
 cd $TGT_ROOT/lib/firmware
 mv *.hcd brcm/ 2>/dev/null
@@ -641,9 +649,7 @@ cat >> ${TGT_ROOT}/etc/crontabs/root << EOF
 37 5 * * * /etc/coremark.sh
 EOF
 
-[ -f $CPUSTAT_PATCH ] && \
-cd $TGT_ROOT/usr/lib/lua/luci/view/admin_status && \
-patch -p0 < ${CPUSTAT_PATCH}
+[ -f $CPUSTAT_PATCH ] && cd $TGT_ROOT && patch -p1 < ${CPUSTAT_PATCH}
 
 # 创建 /etc 初始快照
 echo "创建初始快照: /etc -> /.snapshots/etc-000"
