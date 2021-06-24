@@ -75,6 +75,7 @@ MAC_SCRIPT3="${PWD}/files/inc_macaddr.pl"
 CPUSTAT_SCRIPT="${PWD}/files/cpustat"
 CPUSTAT_SCRIPT_PY="${PWD}/files/cpustat.py"
 CPUSTAT_PATCH="${PWD}/files/luci-admin-status-index-html.patch"
+CPUSTAT_PATCH_02="${PWD}/files/luci-admin-status-index-html-02.patch"
 GETCPU_SCRIPT="${PWD}/files/getcpu"
 TTYD="${PWD}/files/ttyd"
 FLIPPY="${PWD}/files/flippy"
@@ -563,9 +564,16 @@ for mod in $mod_blacklist ;do
 	mv -f ./etc/modules.d/${mod} ./etc/modules.d.remove/ 2>/dev/null
 done
 
-# 在高版本内核下， wifi模块目前问题太多，禁用
 if [ $K510 -eq 1 ];then
-    mv -f ./etc/modules.d/brcm*  ./etc/modules.d.remove/ 2>/dev/null
+    # 高版本内核下，如果ENABLE_WIFI_K510 = 0 则禁用wifi
+    if [ $ENABLE_WIFI_K510 -eq 0 ];then
+        mv -f ./etc/modules.d/brcm*  ./etc/modules.d.remove/ 2>/dev/null
+    fi
+else
+    # 低版本内核下，如果ENABLE_WIFI_K504 = 0 则禁用wifi
+    if [ $ENABLE_WIFI_K504 -eq 0 ];then
+        mv -f ./etc/modules.d/brcm*  ./etc/modules.d.remove/ 2>/dev/null
+    fi
 fi
 
 # 默认禁用sfe
@@ -650,6 +658,7 @@ cat >> ${TGT_ROOT}/etc/crontabs/root << EOF
 EOF
 
 [ -f $CPUSTAT_PATCH ] && cd $TGT_ROOT && patch -p1 < ${CPUSTAT_PATCH}
+[ -x "${TGT_ROOT}/usr/bin/perl" ] && [ -f "${CPUSTAT_PATCH_02}" ] && cd ${TGT_ROOT} && patch -p1 < ${CPUSTAT_PATCH_02}
 
 # 创建 /etc 初始快照
 echo "创建初始快照: /etc -> /.snapshots/etc-000"
