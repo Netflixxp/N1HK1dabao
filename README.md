@@ -36,7 +36,9 @@
 * 将固件写入U盘或TF卡 推荐写盘软件 [rufu](https://rufus.ie/zh/)或者[balenaEtcher](balena.io/etcher/)任选其一
 * 插入U盘启动盒子，输入192.168.1.99进入后台
 * 在系统——TTYD终端——输入用户名root；密码password
-* 输入安装命令 `./install-to-emmc.sh`
+* 输入安装命令
+`cd root`
+`./install-to-emmc.sh`
 * 如果显示挂载失败，重新执行上述安装命令`./install-to-emmc.sh`
 
 # N1和HK1在线升级方法
