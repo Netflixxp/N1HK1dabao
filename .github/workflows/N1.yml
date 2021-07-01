@@ -112,10 +112,10 @@ jobs:
           ## 以下为N1和HK1的最新固件（每日上午7时自动编译打包最新固件）
           默认IP：192.168.1.99 默认密码： password
           Openwrt🚀(注:此版本为jcnf个人的精简版。+o版内核更稳定)
-          **N1和HK1全新安装方法：**
+          N1和HK1全新安装方法：
              1. cd root
              2. ./install-to-emmc.sh
-          **N1和HK1在线升级方法：**
+          N1和HK1在线升级方法：
              1. cd /mnt/mmcblk2p4
              2. wget 升级脚本链接,鼠标右击后缀.sh文件获取链接地址
              3. wget img.gz后缀名的固件链接,鼠标右击后缀.img.gz文件获取链接地址
