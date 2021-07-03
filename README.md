@@ -51,7 +51,7 @@
 * ./升级脚本名字 img固件名
 
 # 插件包括
-![插件列表](https://cdn.jsdelivr.net/gh/Netflixxp/N1HK1dabao/img/lb.png)
+![插件列表](https://cdn.jsdelivr.net/gh/Netflixxp/N1HK1dabao/img/lb1.png)
 * SSR-Plus
 * passwall
 * openclash
