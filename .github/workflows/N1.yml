@@ -1,4 +1,4 @@
-name: Build N1 61+o and 61+
+name: Build N1 62+o and 62+
 on:
   repository_dispatch:
   workflow_dispatch:
@@ -26,10 +26,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - flippy_name: 61+o
-            release_name: N1-jcnf-mini-61+o.img
-          - flippy_name: 61+
-            release_name: N1-jcnf-mini-61+.img
+          - flippy_name: 62+o
+            release_name: N1-jcnf-mini-62+o.img
+          - flippy_name: 62+
+            release_name: N1-jcnf-mini-62+.img
 
     env:
       FLIPPY_NAME: ${{ matrix.flippy_name }}   
@@ -145,4 +145,4 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - name: TG notification #TG推送
-      run: curl "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}&text=N1159+0和N1159+打包成功"
+      run: curl "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}&text=N1162+0和N1162+打包成功"
