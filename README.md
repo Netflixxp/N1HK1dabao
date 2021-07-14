@@ -47,8 +47,8 @@
 ![固件链接地址](https://cdn.jsdelivr.net/gh/Netflixxp/N1HK1dabao/img/zx.png)
 * wget .gz后缀名的固件链接,鼠标右击后缀.gz文件获取链接地址 [点这里跳转](https://github.com/Netflixxp/N1HK1dabao/releases)
 * gzip -d 上一步下载的固件全名
-* chmod +x *.sh
-* ./升级脚本名字 img固件名
+* chmod +x update-amlogic-openwrt.sh
+* ./update-amlogic-openwrt.sh 固件名(例：`./update-amlogic-openwrt.sh HK1-jcnf-mini-62+o.img`)
 
 # 插件包括
 ![插件列表](https://cdn.jsdelivr.net/gh/Netflixxp/N1HK1dabao/img/lb1.png)
