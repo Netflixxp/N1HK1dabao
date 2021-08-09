@@ -1,4 +1,4 @@
-name: Build HK1 img62+o and 62+
+name: Build HK1 img63+o and 63+
 
 on:
   repository_dispatch:
@@ -27,10 +27,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - flippy_name: 62+o
-            release_name: HK1-jcnf-mini-62+o.img
-          - flippy_name: 62+
-            release_name: HK1-jcnf-mini-62+.img
+          - flippy_name: 63+o
+            release_name: HK1-jcnf-mini-63+o.img
+          - flippy_name: 63+
+            release_name: HK1-jcnf-mini-63+.img
 
     env:
       FLIPPY_NAME: ${{ matrix.flippy_name }}   
@@ -146,4 +146,4 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - name: TG notification #TG推送
-      run: curl "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}&text=HK162+0和HK162+打包成功"
+      run: curl "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}&text=HK163+0和HK163+打包成功"
