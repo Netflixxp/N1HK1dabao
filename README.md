@@ -83,6 +83,8 @@
 
 # [购买奈飞正规合租车](https://jcnf.xyz/nf)
 
+# [群友众筹公益机场](https://jcnf.xyz/jd)
+
 # 感激
  * [flippy](https://www.right.com.cn/forum/space-uid-285101.html)
  * [coolsnowwolf/Lede](https://github.com/coolsnowwolf/lede)
