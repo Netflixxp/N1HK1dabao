@@ -80,7 +80,7 @@ jobs:
     - name: copy update files
       run: |
         cd /opt/kernel
-        sudo cp files/update-amlogic-openwrt.sh tmp/update-amlogic-openwrt.sh
+        sudo cp files/openwrt-update-amlogic tmp/openwrt-update-amlogic
         
     - name: pigz -9
       id: pigz
