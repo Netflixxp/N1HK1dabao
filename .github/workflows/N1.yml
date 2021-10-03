@@ -122,6 +122,7 @@ jobs:
              4. gzip -d 解压缩上一步下载的固件全名
              5. chmod +x openwrt-update-amlogic
              6. ./openwrt-update-amlogic后，选择y是保留配置升级，选N相当于重装。
+             7.升级完成后系统会自动重启，稍安勿躁。
         artifacts: "/opt/kernel/tmp/*"   
 
     - name: Upload firmware to WeTransfer

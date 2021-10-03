@@ -1,5 +1,5 @@
 # 重要更新
-* 2021年10月3日，固件升级方式发生一些变化，升级文件改为openwrt-update-amlogic，首先进入目录`cd /mnt/mmcblk2p4` 下载后`chmod +x openwrt-update-amlogic`,之后把固件下载到同一个目录后,执行`./openwrt-update-amlogic`有提示输入`y`为保留配置升级，选`n`相当于重装。
+* 2021年10月3日，固件升级方式发生一些变化，升级文件改为openwrt-update-amlogic，首先进入目录`cd /mnt/mmcblk2p4` 下载后`chmod +x openwrt-update-amlogic`,之后把固件下载到同一个目录后,执行`./openwrt-update-amlogic`有提示输入`y`为保留配置升级，选`n`相当于重装。升级完成后系统会自动重启，稍安勿躁。
 
 * 2021年6月18日，上游大雕全面更新了最新代码，受影响，60+或60+o版本升级61版本的，建议重新安装，如果不想刷U盘全新安装，也可以用升级脚本升级，只是选择是否保存配置时，选“n”
 
