@@ -46,12 +46,11 @@
 
 # N1和HK1在线升级方法
 * cd /mnt/mmcblk2p4
-* wget 升级脚本下载.sh后缀文件 [点这里跳转](https://github.com/Netflixxp/N1HK1dabao/releases)
-![固件链接地址](https://cdn.jsdelivr.net/gh/Netflixxp/N1HK1dabao/img/zx.png)
+* wget 升级脚本为`openwrt-update-amlogic` [点这里跳转](https://github.com/Netflixxp/N1HK1dabao/releases)
 * wget .gz后缀名的固件链接,鼠标右击后缀.gz文件获取链接地址 [点这里跳转](https://github.com/Netflixxp/N1HK1dabao/releases)
 * gzip -d 上一步下载的固件全名
-* chmod +x update-amlogic-openwrt.sh
-* ./update-amlogic-openwrt.sh 固件名(例：`./update-amlogic-openwrt.sh HK1-jcnf-mini-62+o.img`)
+* chmod + x openwrt-update-amlogic
+* ./openwrt-update-amlogic #有提示输入`y`为保留配置升级，选`n`相当于重装。升级完成后系统会自动重启，稍安勿躁。
 
 # 插件包括
 ![插件列表](https://cdn.jsdelivr.net/gh/Netflixxp/N1HK1dabao/img/lb1.png)
