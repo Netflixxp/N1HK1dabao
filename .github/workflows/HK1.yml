@@ -93,7 +93,7 @@ jobs:
 
     - name: Check Files4
       run: |
-        cd /opt/kernel/tmp
+        cd /opt/openwrt_packit/output
         ls
 
     - name: 编译后硬盘容量
