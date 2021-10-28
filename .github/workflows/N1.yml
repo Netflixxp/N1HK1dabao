@@ -50,13 +50,13 @@ jobs:
                 
     - name: Download
       run: |
-        cd /opt/kernel
+        cd /opt/openwrt_packit
         
         wget  https://github.com/Netflixxp/shangyou/releases/download/$version/openwrt-armvirt-64-default-rootfs.tar.gz
                 
     - name: Check Files
       run: |
-        cd /opt/kernel
+        cd /opt/openwrt_packit
         ls
                 
     - name: Install the package
@@ -72,27 +72,27 @@ jobs:
     - name: build img
       run: |
         sudo chmod  -R 777 /opt
-        cd /opt/kernel
+        cd /opt/openwrt_packit
         sudo chmod +x *.sh
         sudo ./mk_s905d_n1.sh
         
     - name: copy update files
       run: |
-        cd /opt/kernel
-        sudo cp files/openwrt-update-amlogic tmp/openwrt-update-amlogic
+        cd /opt/openwrt_packit
+        sudo cp files/openwrt-update-amlogic output/openwrt-update-amlogic
         
     - name: pigz -9
       id: pigz
       run: |
-        sudo chmod -R 777 /opt/kernel/tmp
-        cd /opt/kernel/tmp
+        sudo chmod -R 777 /opt/penwrt_packit/output
+        cd /opt/penwrt_packit/output
         sudo pigz -9 $RELEASE_NAME
 
         echo "::set-output name=status::success"
 
     - name: Check Files4
       run: |
-        cd /opt/kernel/tmp
+        cd /opt/penwrt_packit/output
         ls
 
     - name: 编译后硬盘容量
@@ -123,7 +123,7 @@ jobs:
              5. chmod +x openwrt-update-amlogic
              6. ./openwrt-update-amlogic后，选择y是保留配置升级，选N相当于重装。
              7.升级完成后系统会自动重启，稍安勿躁。
-        artifacts: "/opt/kernel/tmp/*"   
+        artifacts: "/opt/openwrt_packit/output/*"   
 
     - name: Upload firmware to WeTransfer
       if: steps.gz.outputs.status == 'success' && env.UPLOAD_COWTRANSFER == 'true' && !cancelled()
