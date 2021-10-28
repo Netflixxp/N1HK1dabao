@@ -1,4 +1,5 @@
 name: Build N1 66+o and 66+
+
 on:
   repository_dispatch:
   workflow_dispatch:
@@ -84,15 +85,15 @@ jobs:
     - name: pigz -9
       id: pigz
       run: |
-        sudo chmod -R 777 /opt/penwrt_packit/output
-        cd /opt/penwrt_packit/output
+        sudo chmod -R 777 /opt/openwrt_packit/output
+        cd /opt/openwrt_packit/output
         sudo pigz -9 $RELEASE_NAME
 
         echo "::set-output name=status::success"
 
     - name: Check Files4
       run: |
-        cd /opt/penwrt_packit/output
+        cd /opt/openwrt_packit/output
         ls
 
     - name: 编译后硬盘容量
