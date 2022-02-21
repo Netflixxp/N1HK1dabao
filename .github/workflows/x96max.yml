@@ -1,4 +1,4 @@
-name: Build HK1 img70+o and 70+
+name: Build x96max img70+o and 70+
 
 on:
   repository_dispatch:
@@ -28,9 +28,9 @@ jobs:
       matrix:
         include:
           - flippy_name: 70+o
-            release_name: HK1-jcnf-mini-70+o.img
+            release_name: x96max-jcnf-mini-70+o.img
           - flippy_name: 70+
-            release_name: HK1-jcnf-mini-70+.img
+            release_name: x96max-jcnf-mini-70+.img
 
     env:
       FLIPPY_NAME: ${{ matrix.flippy_name }}   
@@ -74,8 +74,8 @@ jobs:
       run: |
         sudo chmod  -R 777 /opt
         cd /opt/openwrt_packit
-        sudo chmod +x mk_s905x3_multi.sh
-        sudo ./mk_s905x3_multi.sh
+        sudo chmod +x mk_s905x2_x96max.sh
+        sudo ./mk_s905x2_x96max.sh
         
     - name: copy update files
       run: |
@@ -104,7 +104,7 @@ jobs:
       id: release
       uses: ncipollo/release-action@v1
       with:
-        name: ${{ env.DATE }} 🚀 N1/ hk1-Openwrt-img | 编译
+        name: ${{ env.DATE }} 🚀 N1/ x96max-Openwrt-img | 编译
         allowUpdates: true
         tag: ${{ env.version }}
         commit: main
@@ -113,10 +113,10 @@ jobs:
           ## 以下为N1、HK1、x96max的最新固件（每日上午7时自动编译打包最新固件）
           默认IP：192.168.1.99 默认密码： password
           Openwrt🚀(注:此版本为jcnf个人的精简版。+o版内核更稳定)
-          N1和HK1全新安装方法：
+          N1和x96max全新安装方法：
              1. cd root
              2. ./install-to-emmc.sh
-          N1和HK1在线升级方法：
+          N1和x96max在线升级方法：
              1. cd /mnt/mmcblk2p4
              2. wget 升级脚本链接,鼠标右击openwrt-update-amlogic 文件获取链接地址
              3. wget img.gz后缀名的固件链接,鼠标右击后缀.img.gz文件获取链接地址
@@ -147,4 +147,4 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - name: TG notification #TG推送
-      run: curl "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}&text=HK170+0和HK170+打包成功"
+      run: curl "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}&text=x96max70+0和x96max70+打包成功"
