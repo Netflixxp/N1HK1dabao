@@ -4,7 +4,6 @@ echo "========================= begin $0 ==========================="
 source make.env
 source public_funcs
 init_work_env
-check_k510
 
 # 盒子型号识别参数 
 PLATFORM=amlogic
@@ -21,6 +20,8 @@ BOOT_TGZ=${KERNEL_PKG_HOME}/boot-${KERNEL_VERSION}.tar.gz
 check_file ${BOOT_TGZ}
 DTBS_TGZ=${KERNEL_PKG_HOME}/dtb-amlogic-${KERNEL_VERSION}.tar.gz
 check_file ${DTBS_TGZ}
+K510=$(get_k510_from_boot_tgz "${BOOT_TGZ}" "vmlinuz-${KERNEL_VERSION}")
+export K510
 ###########################################################################
 
 # Openwrt root 源文件
@@ -188,6 +189,18 @@ FDT=/dtb/amlogic/meson-sm1-x96-max-plus-100m.dtb
 
 # 用于 A95XF3 air 百兆版
 #FDT=/dtb/amlogic/meson-sm1-a95xf3-air-100.dtb
+
+# 用于 Tanix TX3 百兆版
+#FDT=/dtb/amlogic/meson-sm1-tx3-bz.dtb
+
+# 用于 Tanix TX3 百兆版 (超频至2208Mhz)
+#FDT=/dtb/amlogic/meson-sm1-tx3-bz-oc.dtb
+
+# 用于 Tanix TX3 千兆版
+#FDT=/dtb/amlogic/meson-sm1-tx3-qz.dtb
+
+# 用于 Tanix TX3 千兆版 (超频至2208Mhz)
+#FDT=/dtb/amlogic/meson-sm1-tx3-qz-oc.dtb
 
 APPEND=root=UUID=${ROOTFS_UUID} rootfstype=btrfs rootflags=compress=zstd:${ZSTD_LEVEL} console=ttyAML0,115200n8 console=tty0 no_console_suspend consoleblank=0 fsck.fix=yes fsck.repair=yes net.ifnames=0 cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory swapaccount=1
 EOF
