@@ -91,3 +91,8 @@
  * [coolsnowwolf/Lede](https://github.com/coolsnowwolf/lede)
  * [mingxiaoyu](https://github.com/mingxiaoyu)
  * [hibuddies](https://github.com/hibuddies/openwrt/)
+
+## Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/Netflixxp/N1HK1dabao.svg)](https://starchart.cc/Netflixxp/N1HK1dabao)
+
