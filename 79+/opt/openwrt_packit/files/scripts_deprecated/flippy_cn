@@ -1,0 +1,496 @@
+#!/bin/bash
+# flippy's openwrt tools
+
+VERSION="v1.3"
+ZSTD_LEVEL=6
+SNAPSHOT_PRESTR=".snapshots/"
+BACKUP_DIR="/.reserved"
+BACKUP_FILE="${BACKUP_DIR}/openwrt_config.tar.gz"
+BACKUP_LIST='./etc/AdGuardHome.yaml \
+./etc/adblocklist/ \
+./etc/amule/ \
+./etc/balance_irq \
+./etc/bluetooth/ \
+./etc/china_ssr.txt \
+./etc/cifs/cifsdpwd.db \
+./etc/smbd/smbdpwd.db \
+./etc/ksmbd/ksmbdpwd.db \
+./etc/config/ \
+./etc/crontabs/ \
+./usr/share/openclash/core/ \
+./etc/openclash/backup/ \
+./etc/openclash/config/ \
+./etc/openclash/custom/ \
+./etc/openclash/game_rules/ \
+./etc/openclash/rule_provider/ \
+./etc/openclash/proxy_provider/ \
+./etc/dnsforwarder/ \
+./etc/dnsmasq.conf \
+./etc/dnsmasq.d/ \
+./etc/dnsmasq.oversea/ \
+./etc/dnsmasq.ssr/ \
+./etc/docker/daemon.json \
+./etc/docker/key.json \
+./etc/dropbear/ \
+./etc/easy-rsa/ \
+./etc/environment \
+./etc/exports \
+./etc/firewall.user \
+./etc/gfwlist/ \
+./etc/haproxy.cfg \
+./etc/hosts \
+./etc/ipsec.conf \
+./etc/ipsec.d/ \
+./etc/ipsec.secrets \
+./etc/ipsec.user \
+./etc/ipset/ \
+./etc/mosdns/config.yaml \
+./etc/mwan3.user \
+./etc/nginx/nginx.conf \
+./etc/ocserv/ \
+./etc/openvpn/ \
+./etc/pptpd.conf \
+./etc/qBittorrent/ \
+./etc/rc.local \
+./etc/samba/smbpasswd \
+./etc/shadow \
+./etc/smartdns/ \
+./etc/sqm/ \
+./etc/ssh/*key*  \
+./etc/ssl/private/  \
+./etc/ssrplus/ \
+./etc/sysupgrade.conf \
+./etc/tailscale/ \
+./etc/transmission/ \
+./etc/uhttpd.crt \
+./etc/uhttpd.key \
+./etc/urandom.seed \
+./etc/v2raya/ \
+./etc/verysync/ \
+./root/.ssh/'
+
+if dmesg | grep 'meson' >/dev/null 2>&1; then
+    PLATFORM="amlogic"
+elif dmesg | grep 'rockchip' >/dev/null 2>&1; then
+    PLATFORM="rockchip"
+elif dmesg | grep 'sun50i-h6' >/dev/null 2>&1; then
+    PLATFORM="allwinner"
+else
+    source /etc/flippy-openwrt-release
+    case $PLATFORM in 
+        amlogic|rockchip|allwinner|qemu-aarch64) : ;;
+	*) echo "发现未知的平台，当前仅支持 amlogic, rockchip, allwinner H6, qemu-aarch64 等 4 种平台!"
+           exit 1
+	   ;;
+    esac
+fi
+
+backup() {
+    cd /
+    echo -n "备份配置文件 ... "
+    [ -d "${BACKUP_DIR}" ] || mkdir -p "${BACKUP_DIR}"
+    eval tar czf "${BACKUP_FILE}" "${BACKUP_LIST}" 2>/dev/null
+    if [ -f "${BACKUP_FILE}" ];then
+        echo "成功"
+        exit 0
+    else
+        echo "失败!"
+        exit 1
+    fi
+}
+
+restore() {
+    if [ -f "${BACKUP_FILE}" ];then
+	echo -n "恢复配置文件 ... "
+        cd /
+        tar xzf "${BACKUP_FILE}"
+	echo "成功"
+    else
+        echo "没找到备份文件: ${BACKUP_FILE}!"
+        exit 1
+    fi
+}
+
+create_snapshot() {
+    default_snap_name="etc-"$(date +"%Y%m%d%H%M%S") 
+    echo "默认的快照名称是: ${default_snap_name}"
+    echo "如果您想要修改快照名称，请在下边输入; 如果不想修改，则直接回车. "
+    echo "注意: 名称可以是中文，但不能包含空格! 或者按 q 键直接返回. "
+    while :;do
+        read -p "[${default_snap_name}] : " nname
+	if [ "$nname" == "" ];then
+	    snap_name=$default_snap_name
+	    break
+	elif echo "$nname" | grep -E "\s+" > /dev/null;then
+	    echo "名称 [${nname}] 中包含空格，请重新输入!"
+	    continue
+	elif [ "$nname" == "q" ] || [ "$nname" == "Q" ];then
+	    return
+        else
+	    if btrfs subvolume list -rt / | awk '{print $4}' | grep "^\\${SNAPSHOT_PRESTR}${nname}$" >/dev/null;then
+		echo "名称: [$nname] 已经被使用，请重新输入！"
+		continue
+	    else
+                snap_name=$nname
+		break
+	    fi
+	fi
+    done
+    (  cd /
+       chattr -ia etc/config/fstab
+       btrfs subvolume snapshot -r /etc "${SNAPSHOT_PRESTR}${snap_name}"
+       if [ $? -eq 0 ];then
+  	   echo "快照创建成功: ${snap_name}"
+       else
+	   echo "快照创建失败！"
+       fi
+    )
+    read -p "按回车键返回" q
+}
+
+list_snapshot() {
+    echo "-----------------------------------------------------------------------------------"
+    btrfs subvolume list -rt /
+    echo "-----------------------------------------------------------------------------------"
+    read -p "按回车键返回" q
+}
+
+delete_snapshot() {
+    echo "下面是已存在的 etc 快照，请输入其中一个的名字"
+    echo "提示： etc-000 这是出厂初始配置 (不可删除)"
+    echo "       etc-001 如果存在，则是从上个版本升级后的初始配置 (不可删除)"
+    echo "-----------------------------------------------------------------------------------"
+    btrfs subvolume list -rt /
+    echo "-----------------------------------------------------------------------------------"
+    read -p "请输入要删除的快照名字(只需要输入 ${SNAPSHOT_PRESTR} 之后的部分): " snap_name
+    if [ "$snap_name" == "etc-000" ] || [ "$snap_name" == "etc-001" ];then
+	 read -p "关键快照不可删除! 按回车键返回" q
+    elif [ "$snap_name" == "" ];then
+	 read -p "名字为空！按回车键返回" q
+    else
+         if btrfs subvolume list -rt / | grep "${SNAPSHOT_PRESTR}${snap_name}" > /dev/null;then
+	     read -p "确定要删除 $snap_name 吗? y/n [n] " yn
+	     case $yn in 
+	         y|Y)
+		       (
+		          cd /
+		          btrfs subvolume delete -c "${SNAPSHOT_PRESTR}${snap_name}"
+		          if [ $? -eq 0 ];then
+		              echo "快照 [${snap_name}] 已删除"
+			  else
+			      echo "快照 [${snap_name}] 删除失败!"
+			  fi
+		        )
+	   	        read -p "按回车建返回." q
+			;;
+	           *)   break
+		        ;;
+	     esac
+         else
+	     read -p "快照名字不正确，按回车键返回." q
+	 fi
+    fi
+}
+
+restore_snapshot() {
+    echo "下面是已存在的 etc 快照，请输入其中一个的名字"
+    echo "提示： etc-000 这是出厂初始配置"
+    echo "       etc-001 如果存在，则是从上个版本升级后的初始配置"
+    echo "-----------------------------------------------------------------------------------"
+    btrfs subvolume list -rt /
+    echo "-----------------------------------------------------------------------------------"
+    read -p "请输入要恢复的快照名字(只需要输入 ${SNAPSHOT_PRESTR} 之后的部分): " snap_name
+    if btrfs subvolume list -rt / | grep "${SNAPSHOT_PRESTR}${snap_name}" > /dev/null;then
+	while :;do
+	    echo "一旦恢复快照，当前的 /etc 将全部被覆盖！"
+	    read -p "确定要恢复快照: [$snap_name] 吗? y/n [n] " yn
+	    case $yn in 
+		    y|Y)
+			    (
+			      cd /
+                              chattr -ia etc/config/fstab
+			      mv etc etc.backup
+                              btrfs subvolume snapshot "${SNAPSHOT_PRESTR}${snap_name}" etc
+			      if [ $? -eq 0 ];then
+				 btrfs subvolume delete -c etc.backup
+				 echo "恢复成功，请输入 reboot 重启系统！"
+			      else
+				 rm -rf etc 
+				 mv etc.backup etc
+				 echo "恢复失败, etc 未发生任何变化!"
+			      fi
+		            )
+	   		    read -p "按回车建返回" q
+			    break
+			    ;;
+	              *)    break
+			    ;;
+	    esac
+        done
+    else
+	read -p "快照名称不正确，请重新运行程序！按回车键返回." q
+    fi
+}
+
+migrate_snapshot() {
+    cur_rootdev=$(lsblk -l -o NAME,MOUNTPOINT |awk '$2~/^\/$/ {print $1}')
+    if [ "$cur_rootdev" == "" ];then
+	echo "无法找到当前的 rootfs 对应的磁盘设备！"
+	read -p "按回车键返回" q
+	return
+    fi
+    dev_pre=$(echo "$cur_rootdev" | awk '{print substr($1, 1, length($1)-1);}')
+    rootdev_idx=$(echo "$cur_rootdev" | awk '{print substr($1, length($1),1);}')
+    case $rootdev_idx in 
+       2) old_rootpath="/mnt/${dev_pre}3";;
+       3) old_rootpath="/mnt/${dev_pre}2";;
+       *) echo "判断旧版 rootfs 路径失败!"
+	  read -p "按回车键返回" q
+	  return
+	  ;; 
+    esac
+    echo "下面是从旧版 rootfs 中找到的 etc 快照，请输入其中一个的名字"
+    echo "提示： 自动排除 etc-000 和 etc-001"
+    echo "-----------------------------------------------------------------------------------"
+    btrfs subvolume list -rt "$old_rootpath" | grep -v "${SNAPSHOT_PRESTR}etc-000" | grep -v "${SNAPSHOT_PRESTR}etc-001"
+    echo "-----------------------------------------------------------------------------------"
+    read -p "请输入要迁移的快照名字(只需要输入 ${SNAPSHOT_PRESTR} 之后的部分): " old_snap_name
+    if [ "$old_snap_name" == "" ];then
+	 read -p "名称为空, 按回车键返回" q
+	 return
+    elif ! btrfs subvolume list -rt "$old_rootpath" | awk '{print $4}' | grep "^${SNAPSHOT_PRESTR}${old_snap_name}$" >/dev/null;then
+	 echo "名称输入错误, 未找到对应的快照!"
+	 read -p "按回车键返回" q
+	 return
+    elif [ "$old_snap_name" == "etc-000" ] || [ "$old_snap_name" == "etc-001" ];then
+	 echo "关键快照不允许迁移!"
+	 read -p "按回车键返回" q
+	 return
+    fi
+    
+    # 查找当前 rootfs下有无重名快照
+    if btrfs subvolume list -rt / | awk '{print $4}' | grep "^\\${SNAPSHOT_PRESTR}${old_snap_name}$" >/dev/null;then
+	 echo "当前已存在名称为 [$old_snap_name] 的快照, 无法进行迁移! (但可以删除现有同名快照后再迁移)"
+	 read -p "按回车键返回" q
+	 return
+    fi
+    
+    need_size=$(du -h -d0 ${old_rootpath}/${SNAPSHOT_PRESTR}${old_snap_name} | tail -n1 | awk '{print $1}')
+    echo "----------------------------------------------------------------------------------------------"
+    df -h 
+    echo "----------------------------------------------------------------------------------------------"
+    echo -e "\033[1m注意：迁移 [${old_rootpath}] 的快照 [$old_snap_name] 到当前 rootfs, 需占用大约 $need_size 空间,"
+    echo -e "      请确认 [/] 所在的分区 [/dev/${cur_rootdev}] 可用空间(Available)是否充足?\033[0m"
+    read -p "是否确定迁移？ y/n [n] " yn
+    if [ "$yn" == "y" ] ||  [ "$yn" == "Y" ];then
+       (
+           cd /
+           btrfs send ${old_rootpath}/${SNAPSHOT_PRESTR}${old_snap_name} | btrfs receive ${SNAPSHOT_PRESTR}
+	   if [ $? -eq 0 ];then
+	       btrfs property set -ts ${SNAPSHOT_PRESTR}${old_snap_name} ro false
+	       cp ${SNAPSHOT_PRESTR}etc-000/config/fstab ${SNAPSHOT_PRESTR}${old_snap_name}/config/
+	       cp ${SNAPSHOT_PRESTR}etc-000/fstab ${SNAPSHOT_PRESTR}${old_snap_name}/
+	       cp ${SNAPSHOT_PRESTR}etc-000/openwrt_release ${SNAPSHOT_PRESTR}${old_snap_name}/
+	       cp ${SNAPSHOT_PRESTR}etc-000/openwrt_version ${SNAPSHOT_PRESTR}${old_snap_name}/
+	       cp ${SNAPSHOT_PRESTR}etc-000/flippy-openwrt-release ${SNAPSHOT_PRESTR}${old_snap_name}/
+	       cp ${SNAPSHOT_PRESTR}etc-000/banner ${SNAPSHOT_PRESTR}${old_snap_name}/banner
+	       btrfs property set -ts ${SNAPSHOT_PRESTR}${old_snap_name} ro true
+	       echo "迁移完成，如果想应用快照 [$old_snap_name], 请使用恢复快照功能."
+	   else
+	       echo "迁移失败!"
+	   fi
+	   read -p "按回车键返回" q
+	   return
+       ) 
+    fi
+}
+
+snapshot_help() {
+    clear
+    cat <<EOF
+============================================================================================================
+1.  什么是快照？
+    快照就是某一子卷(subvolume)在某一时点的状态记录, 快照是一种特殊的子卷；
+    本地快照刚生成时，与原始子卷共享磁盘空间，所以不占用额外空间，后续发生过变化的文件才占空间；
+    从其它地方迁移过来的快照，实质上不是快照，而只是普通子卷，所以要占用空间。
+2.  如何显示已有的快照？
+    输入命令： btrfs subvolume list -rt /  
+---------------------------------------------------------------------------------------------
+EOF
+    btrfs subvolume list -rt /
+    cat <<EOF
+---------------------------------------------------------------------------------------------
+2.  如何创建快照？
+    btrfs subvolume snapshot -r /etc /.snapshots/快照1  # -r 是生成只读快照的意思
+3.  如何删除快照？
+    btrfs subvolume delete -c /.snapshots/快照1  # -c 是 commit 的意思
+4.  快照如何改名？
+    用操作系统的 mv 命令即可，例如：
+    mv /.snapshots/快照1 /.snapshots/快照2
+5.  如何还原快照？
+    mv /etc /etc.backup  # 备份 etc 到 etc.backup,也就是子卷改名
+    btrfs subvolume snapshot /.snapshots/etc-001  /etc   # 用快照 etc-001 生成快照 etc,注意没带 -r 参数
+    # (是的,快照也可以再生成快照)
+    btrfs delete -c /etc.backup # 上一步骤成功后，可以删除刚才的etc备份
+6.  如何从快照中还原某个文件?
+    实例A: 从快照 etc-000 还原挂载点配置文件： /etc/config/fstab
+        cp /.snapshots/etc-000/config/fstab /etc/config/
+    实例B: 从快照 etc-001 还原网络配置：
+        cp /.snapshots/etc-001/config/network  /etc/config/
+    实例C: 从快照 etc-001 还原 ssr 的配置文件：
+        cp /.snapshots/etc-001/config/shadowsocksr /etc/config/
+    # (是的，就是操作系统的复制命令)
+7.  如何从远程迁移快照？
+    btrfs 支持 ssh 远程迁移快照, 例如：
+    ssh 192.168.1.1 btrfs send /.snapshots/快照x  |  btrfs receive /.snapshots
+    命令完成后，远程的 快照x 就复制到本地的 /.snapshots/快照x 了(如上所述，迁移过来的是子卷，要占用空间的)
+============================================================================================================
+EOF
+    exit 0
+}
+
+gen_fstab() {
+    ROOT_MSG=$(lsblk -l -o NAME,PATH,MOUNTPOINT,UUID,FSTYPE,LABEL | awk '$3 ~ /^\/$/ {print $0}')
+    if [ "$ROOT_MSG" == "" ];then
+	echo "获得 rootfs 信息失败!"
+	exit 1
+    fi
+
+    ROOT_NAME=$(echo $ROOT_MSG | awk '{print $1}')
+    ROOT_DEV=$(echo $ROOT_MSG | awk '{print $2}')
+    ROOT_UUID=$(echo $ROOT_MSG | awk '{print $4}')
+    ROOT_FSTYPE=$(echo $ROOT_MSG | awk '{print $5}')
+    ROOT_LABEL=$(echo $ROOT_MSG | awk '{print $6}')
+
+    EMMC_NAME=$(echo $ROOT_NAME | cut -c 1-7)
+
+    BOOT_NAME="${EMMC_NAME}p1"
+    BOOT_MSG=$(lsblk -l -o NAME,UUID,FSTYPE,LABEL | grep "${BOOT_NAME}")
+    BOOT_DEV="/dev/${BOOT_NAME}"
+    BOOT_UUID=$(echo $BOOT_MSG | awk '{print $2}')
+    BOOT_FSTYPE=$(echo $BOOT_MSG | awk '{print $3}')
+    BOOT_LABEL=$(echo $BOOT_MSG | awk '{print $4}')
+
+    cat > /etc/config/fstab <<EOF
+config global
+	option anon_swap '0'
+	option anon_mount '1'
+	option auto_swap '0'
+	option auto_mount '1'
+	option delay_root '5'
+	option check_fs '0'
+
+config mount
+	option target '/overlay'
+	option uuid '${ROOT_UUID}'
+	option enabled '1'
+	option enabled_fsck '1'
+	option fstype '${ROOT_FSTYPE}'
+EOF
+
+    if [ "${ROOT_FSTYPE}" == "btrfs" ];then
+        echo "	option options 'compress=zstd:${ZSTD_LEVEL}'" >> /etc/config/fstab
+    fi
+
+    cat >> /etc/config/fstab <<EOF
+
+config mount
+	option target '/boot'
+EOF
+    
+    if [ "${BOOT_FSTYPE}" == "vfat" ];then
+        echo "	option label '${BOOT_LABEL}'" >> /etc/config/fstab
+    else
+        echo "	option uuid '${BOOT_UUID}'" >> /etc/config/fstab
+    fi
+
+    cat >> /etc/config/fstab <<EOF
+	option enabled '1'
+	option enabled_fsck '0'
+	option fstype '${BOOT_FSTYPE}'
+           
+EOF
+    echo "/etc/config/fstab 已生成完毕."
+    echo "请输入 reboot 命令重启系统"
+    exit 0
+}
+
+print_list() {
+    echo "${BACKUP_LIST}"
+    exit 0
+}
+
+print_help() {
+    echo "用法:  $0  -b  (备份)"
+    echo "       $0  -r  (恢复)"
+    echo "       $0  -p  (打印备份文件清单)"
+    echo "       $0  -g  (生成 fstab)"
+    echo "       $0  -B  (创建 etc 快照)"
+    echo "       $0  -L  (列出已有的 etc 快照)"
+    echo "       $0  -R  (还原 etc 快照)"
+    echo "       $0  -D  (删除某个 etc 快照)"
+    echo "       $0  -M  (从旧版本迁移某个快照到当前 rootfs)"
+    echo "       $0  -J  (快照自助教程)"
+    echo "       $0  -h  (帮助)"
+    exit 0
+}
+
+menu() {
+    while :;do
+        clear
+        cat <<EOF
+	  Flippy 的工具包  ${VERSION}
+┌─────────────────────────────────────┐
+│   传    b. 备份(tar方式)            │
+│   统    r. 恢复(tar方式)            │
+│   方    p. 打印备份清单(tar方式)    │
+│   式    g. 生成 fstab (修复挂载点)  │
+├┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┤
+│         B. 创建 etc 快照            │
+│   快    L. 列出当前的 etc 快照      │
+│         R. 还原 etc 快照            │
+│         D. 删除某个 etc 快照        │
+│   照    M. 从旧版 rootfs 迁移快照   │
+│         J. 快照自助教程             │
+├┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┤
+│         h. 帮助                     │
+╞═════════════════════════════════════╡
+│         q. 退出                     │
+└─────────────────────────────────────┘
+EOF
+echo -ne " 请选择: [ ]\b\b"
+        read select
+	case $select in 
+	    b)  backup;;
+	    r)  restore
+		gen_fstab;;
+	    p)  print_list;;
+            g)  gen_fstab;;
+	    B)  create_snapshot;;
+	    L)  list_snapshot;;
+	    R)  restore_snapshot;;
+	    D)  delete_snapshot;;
+	    M)  migrate_snapshot;;
+	    J)  snapshot_help;;
+	    h)  print_help;;
+	    q)  exit 0;;
+	esac
+    done
+}
+
+getopts 'brpgBLRDMJh' opts
+case $opts in 
+    b) backup;;
+    r) restore
+       gen_fstab;;
+    p) print_list;;
+    g) gen_fstab;;
+    B) create_snapshot;;
+    L) list_snapshot;;
+    R) restore_snapshot;;
+    D) delete_snapshot;;
+    M) migrate_snapshot;;
+    J) snapshot_help;;
+    h) print_help;;
+    *) menu;;
+esac
