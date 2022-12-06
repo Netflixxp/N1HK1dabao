@@ -30,7 +30,7 @@ OPWRT_ROOTFS_GZ="${PWD}/${OP_ROOT_TGZ}"
 echo "Use $OPWRT_ROOTFS_GZ as openwrt rootfs!"
 
 # 目标镜像文件
-TGT_IMG="${WORK_DIR}/x96max-jcnf-mini-78+o.img"
+TGT_IMG="${WORK_DIR}/x96max-jcnf-mini-79+o.img"
 
 # 补丁和脚本
 ###########################################################################
