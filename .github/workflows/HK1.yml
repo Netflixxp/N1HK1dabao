@@ -21,84 +21,65 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
-    name: Build for ${{ matrix.flippy_name }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - flippy_name: 86+o
-            release_name: HK1-jcnf-mini-86+o.img
-          - flippy_name: 86+
-            release_name: HK1-jcnf-mini-86+.img
+    runs-on: ubuntu-22.04
+    if: github.event.repository.owner.id == github.event.sender.id || ! github.event.sender.id
 
-    env:
-      FLIPPY_NAME: ${{ matrix.flippy_name }}   
-      RELEASE_NAME: ${{ matrix.release_name }}
     steps:
     - name: Checkout
-      uses: actions/checkout@main
-      
+      uses: actions/checkout@v2
+
     - name: Initialization environment
-      run: |     
-        version=$(curl -s "https://api.github.com/repos/Netflixxp/shangyou/releases/latest" | awk -F '"' '/tag_name/{print $4}')
-        
-        echo "version=$version"  >> $GITHUB_ENV
-        echo "DATE=$(date "+%Y-%m-%d %H:%M:%S")"  >> $GITHUB_ENV
-        
-        sudo chmod  -R 777 /opt
-        cp -r ${FLIPPY_NAME}/opt/* /opt
-                
-    - name: Download
+      env:
+        DEBIAN_FRONTEND: noninteractive
       run: |
-        cd /opt/openwrt_packit
-        
-        wget  https://github.com/breakings/OpenWrt/releases/download/ARMv8_ROOTFS/openwrt-armvirt-64-generic-rootfs.tar.gz
-                
-    - name: Check Files
-      run: |
-        cd /opt/openwrt_packit
-        ls
-                
-    - name: Install the package
-      run: |
+        docker rmi `docker images -q`
         sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
         sudo -E apt-get -qq update
-        sudo -E apt-get -qq install xz-utils btrfs-progs gawk zip unzip curl dosfstools  uuid-runtime
-        sudo -E apt-get -qq install git  git-core
-        sudo -E apt-get -qq install pigz
+        sudo -E apt-get -qq install $(curl -fsSL https://is.gd/depends_ubuntu_2204)
         sudo -E apt-get -qq autoremove --purge
         sudo -E apt-get -qq clean
-    
-    - name: build img
-      run: |
-        sudo chmod  -R 777 /opt
-        cd /opt/openwrt_packit
-        sudo chmod +x mk_s905x3_multi.sh
-        sudo ./mk_s905x3_multi.sh
-        
-    - name: copy update files
-      run: |
-        cd /opt/openwrt_packit
-        sudo cp files/openwrt-update-amlogic output/openwrt-update-amlogic
-        
-    - name: pigz -9
-      id: pigz
-      run: |
-        sudo chmod -R 777 /opt/openwrt_packit/output
-        cd /opt/openwrt_packit/output
-        sudo pigz -9 $RELEASE_NAME
+        sudo timedatectl set-timezone "$TZ"
+        sudo mkdir -p /workdir
+        sudo chown $USER:$GROUPS /workdir
 
-        echo "::set-output name=status::success"
-
-    - name: Check Files4
+    - name: Clone source code
+      working-directory: /workdir
       run: |
-        cd /opt/openwrt_packit/output
-        ls
+        df -hT $PWD
+        git clone $REPO_URL -b $REPO_BRANCH openwrt
+        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+        cd openwrt
+        useVersionInfo=$(git show -s --date=short --format="Author: %an<br/>date: %cd<br/>commit: %s<br/>commit hash: %H")
+        echo "useVersionInfo=$useVersionInfo" >> $GITHUB_ENV
+        echo "DATE=$(date "+%Y-%m-%d %H:%M:%S")" >> $GITHUB_ENV
+        echo "DATE1=$(date "+%Y-%m-%d")" >> $GITHUB_ENV
 
-    - name: 编译后硬盘容量
+    - name: Package Armvirt as OpenWrt
       if: (!cancelled())
-      run: df -hT
+      uses: ophub/flippy-openwrt-actions@main
+      env:
+        OPENWRT_ARMVIRT: https://github.com/breakings/OpenWrt/releases/download/ARMv8_ROOTFS/openwrt-armvirt-64-generic-rootfs.tar.gz
+        PACKAGE_SOC: all
+        WHOAMI: breakings
+        #KERNEL_REPO_URL: https://github.com/breakings/OpenWrt/tree/main/opt
+        KERNEL_VERSION_NAME: 5.15.100_6.1.18
+        #OPENWRT_VER: R23.5.1
+        KERNEL_AUTO_LATEST: true
+        GZIP_IMGS: .gz
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: SSH connection to Actions @ Ctrl+C to enter, Ctrl+D to exit
+      uses: P3TERX/ssh2actions@main
+      if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
+      env:
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+
+    - name: Upload artifact to Actions
+      uses: kittaakos/upload-artifact-as-is@master
+      if: env.PACKAGED_STATUS == 'success' && env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+      with:
+        path: ${{ env.PACKAGED_OUTPUTPATH }}/
 
     - name: Create release
       id: release
