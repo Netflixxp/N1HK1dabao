@@ -1,4 +1,5 @@
 # 重要更新
+* 2023年10月18日，无力更新，请前往其他项目 例如https://github.com/breakings/OpenWrt/releases/tag/armv8_mini
 * 2021年10月28日，更新了F大最新的打包方式，具体为`固件打包输出路径从tmp改成output了,这样就允许用tmpfs挂载到tmp而不占用太多内存(得自己挂，当系统内存大于4GB时可行，mount -t tmpfs  none  /opt/openwrt_packit/tmp），提高打包速度，减少出错概率。`
 
 * 2021年10月3日，固件升级方式发生一些变化，升级文件改为openwrt-update-amlogic，首先进入目录`cd /mnt/mmcblk2p4` 下载后`chmod +x openwrt-update-amlogic`,之后把固件下载到同一个目录后,执行`./openwrt-update-amlogic`有提示输入`y`为保留配置升级，选`n`相当于重装。升级完成后系统会自动重启，稍安勿躁。
